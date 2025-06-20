@@ -1,0 +1,1081 @@
+{
+  "datasets" : [ {
+    "name" : "750266a6",
+    "displayName" : "reviews_analysis",
+    "query" : "SELECT * FROM mido_edw_dev.sentiment_analysis.reviews_analysis"
+  }, {
+    "name" : "11bb9cee",
+    "displayName" : "worse_products",
+    "query" : "SELECT\nitem_name,\nsum(review_count) Total_Reviews\nFROM mido_edw_dev.sentiment_analysis.reviews_analysis\nwhere sentiment = 'Negative'\ngroup by item_name\norder by sum(review_count) desc\nlimit 10"
+  }, {
+    "name" : "c7719edf",
+    "displayName" : "worst_product_by_theme",
+    "query" : "SELECT t.item_name, count(t.item_id) Number_of_Themes\n FROM mido_edw_dev.sentiment_analysis.themes_analysis t\n inner join mido_edw_dev.sentiment_analysis.reviews_analysis r on t.item_id = r.item_id\n where r.sentiment = 'Negative'\n group by t.item_name\n order by Number_of_Themes desc\n limit 10"
+  }, {
+    "name" : "6adf7a21",
+    "displayName" : "best_product_by_theme",
+    "query" : "SELECT t.item_name, count(t.item_id) Number_of_Themes\n FROM mido_edw_dev.sentiment_analysis.themes_analysis t\n inner join mido_edw_dev.sentiment_analysis.reviews_analysis r on t.item_id = r.item_id\n where r.sentiment = 'Positive'\n group by t.item_name\n order by Number_of_Themes desc\n limit 10"
+  }, {
+    "name" : "63b29e61",
+    "displayName" : "summary__worst_sentiment",
+    "query" : "with cte_parsedlink as\n(select item_name, \nsentiment_score,\nsentiment,\nREPLACE(item_name, ' ', '%2520') AS parsed_product_name\nfrom mido_edw_dev.sentiment_analysis.reviews_analysis)\nselect item_name,\n round(avg(sentiment_score),1) Average_Sentiment,\n count(*) Total_Reviews,\nconcat('<a href=\"https://adb-984752964297111.11.azuredatabricks.net/dashboardsv3/01f01166a45b1e7196dc881b7a5d32ae/published/pages/e4f2954a?o=984752964297111&f_e4f2954a~6f005cfb=',parsed_product_name,'\" target=\"_blank\">',item_name,'</a>') Link\nfrom cte_parsedlink\nwhere sentiment_score is not null\nand sentiment = 'Negative'\ngroup by parsed_product_name, item_name\norder by Total_Reviews desc\nlimit 10"
+  }, {
+    "name" : "3a33ebf9",
+    "displayName" : "product_sentiment_summary",
+    "query" : "SELECT t.item_name, t.Key_theme, count(t.item_id) Number_of_Themes\n FROM mido_edw_dev.sentiment_analysis.themes_analysis t\n inner join mido_edw_dev.sentiment_analysis.reviews_analysis r on t.item_id = r.item_id\n where r.item_name =  :item \n group by t.item_name, t.Key_theme\n order by Number_of_Themes desc\n",
+    "parameters" : [ {
+      "displayName" : "item",
+      "keyword" : "item",
+      "dataType" : "STRING",
+      "defaultSelection" : {
+        "values" : {
+          "dataType" : "STRING",
+          "values" : [ {
+            "value" : "Rhyno Spark Pills for Men (60 Capsules)"
+          } ]
+        }
+      }
+    } ]
+  }, {
+    "name" : "3a62c660",
+    "displayName" : "pm_item_lu",
+    "query" : "select distinct item_name from mido_edw_dev.sentiment_analysis.reviews_analysis"
+  }, {
+    "name" : "4adb1972",
+    "displayName" : "product_sentiment_summary_card",
+    "query" : "SELECT r.item_name,\nr.average_rating,\ni.main_category as item_category,\ni.rating_number\nfrom mido_edw_dev.sentiment_analysis.reviews_analysis r\ninner join mido_edw_dev.sentiment_analysis.amazon_items i on r.item_id = i.parent_asin\n where r.item_name =  :item \n\n",
+    "parameters" : [ {
+      "displayName" : "item",
+      "keyword" : "item",
+      "dataType" : "STRING",
+      "defaultSelection" : {
+        "values" : {
+          "dataType" : "STRING",
+          "values" : [ {
+            "value" : "Rhyno Spark Pills for Men (60 Capsules)"
+          } ]
+        }
+      }
+    } ]
+  }, {
+    "name" : "0f002b0e",
+    "displayName" : "product_sentiment_summary_suggestions",
+    "query" : "SELECT r.item_name as Product,\nr.average_rating,\ni.main_category as item_category,\ni.rating_number,\nr.Suggestions\nfrom mido_edw_dev.sentiment_analysis.reviews_analysis r\ninner join mido_edw_dev.sentiment_analysis.amazon_items i on r.item_id = i.parent_asin\n where r.item_name =  :item \n\n",
+    "parameters" : [ {
+      "displayName" : "item",
+      "keyword" : "item",
+      "dataType" : "STRING",
+      "defaultSelection" : {
+        "values" : {
+          "dataType" : "STRING",
+          "values" : [ {
+            "value" : "Rhyno Spark Pills for Men (60 Capsules)"
+          } ]
+        }
+      }
+    } ]
+  } ],
+  "pages" : [ {
+    "name" : "d88f41eb",
+    "displayName" : "Sentiment Main",
+    "layout" : [ {
+      "widget" : {
+        "name" : "23bbe339",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "750266a6",
+            "fields" : [ {
+              "name" : "count(Review_Count)",
+              "expression" : "COUNT(`Review_Count`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(Review_Count)",
+              "displayName" : "Count of Review_Count"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Total Review Count"
+          }
+        }
+      },
+      "position" : {
+        "x" : 5,
+        "y" : 0,
+        "width" : 1,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "9ce86d7a",
+        "textbox_spec" : "# Product Feedback Analysis - Solution Accelerator"
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 5,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "87c8d164",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "750266a6",
+            "fields" : [ {
+              "name" : "sum(Review_Count)",
+              "expression" : "SUM(`Review_Count`)"
+            }, {
+              "name" : "sentiment",
+              "expression" : "`sentiment`"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "pie",
+          "encodings" : {
+            "angle" : {
+              "fieldName" : "sum(Review_Count)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "displayName" : "Sum of Review_Count"
+            },
+            "color" : {
+              "fieldName" : "sentiment",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "sentiment"
+            },
+            "label" : {
+              "show" : true
+            }
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 2,
+        "width" : 2,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "194efc16",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "11bb9cee",
+            "fields" : [ {
+              "name" : "sum(Total_Reviews)",
+              "expression" : "SUM(`Total_Reviews`)"
+            }, {
+              "name" : "item_name",
+              "expression" : "`item_name`"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "bar",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "item_name",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "axis" : {
+                "title" : "Product"
+              },
+              "displayName" : "Product"
+            },
+            "y" : {
+              "fieldName" : "sum(Total_Reviews)",
+              "scale" : {
+                "type" : "quantitative"
+              },
+              "axis" : {
+                "title" : "Total Reviews"
+              },
+              "displayName" : "Total Reviews"
+            },
+            "color" : {
+              "fieldName" : "sum(Total_Reviews)",
+              "scale" : {
+                "type" : "quantitative",
+                "colorRamp" : {
+                  "mode" : "scheme",
+                  "scheme" : "reds"
+                }
+              },
+              "displayName" : "Sum of Total_Reviews"
+            }
+          },
+          "frame" : {
+            "title" : "Product with Most Negative Sentiment\n",
+            "showTitle" : true
+          }
+        }
+      },
+      "position" : {
+        "x" : 2,
+        "y" : 2,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "2ea79dc6",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "750266a6",
+            "fields" : [ {
+              "name" : "count(Review_Count)",
+              "expression" : "COUNT(`Review_Count`)"
+            } ],
+            "filters" : [ {
+              "expression" : "`sentiment` IN ('Negative')"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(Review_Count)",
+              "displayName" : "Count of Review_Count"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Negative Reviews"
+          }
+        }
+      },
+      "position" : {
+        "x" : 5,
+        "y" : 2,
+        "width" : 1,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "e2dba9e2",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "750266a6",
+            "fields" : [ {
+              "name" : "count(Review_Count)",
+              "expression" : "COUNT(`Review_Count`)"
+            } ],
+            "filters" : [ {
+              "expression" : "`sentiment` IN ('Positive')"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(Review_Count)",
+              "displayName" : "Count of Review_Count"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Positive Reviews"
+          }
+        }
+      },
+      "position" : {
+        "x" : 5,
+        "y" : 4,
+        "width" : 1,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "70880d52",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "750266a6",
+            "fields" : [ {
+              "name" : "count(Review_Count)",
+              "expression" : "COUNT(`Review_Count`)"
+            } ],
+            "filters" : [ {
+              "expression" : "`sentiment` IN ('Neutral')"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(Review_Count)",
+              "displayName" : "Count of Review_Count"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Neutral Reviews"
+          }
+        }
+      },
+      "position" : {
+        "x" : 5,
+        "y" : 6,
+        "width" : 1,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "783fa556",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "c7719edf",
+            "fields" : [ {
+              "name" : "item_name",
+              "expression" : "`item_name`"
+            }, {
+              "name" : "sum(Number_of_Themes)",
+              "expression" : "SUM(`Number_of_Themes`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 3,
+          "widgetType" : "area",
+          "encodings" : {
+            "x" : {
+              "fieldName" : "item_name",
+              "scale" : {
+                "type" : "categorical"
+              },
+              "displayName" : "item_name"
+            },
+            "y" : {
+              "fieldName" : "sum(Number_of_Themes)",
+              "scale" : {
+                "type" : "quantitative",
+                "fn" : {
+                  "type" : "symlog"
+                }
+              },
+              "axis" : {
+                "title" : "Negative Themes"
+              },
+              "displayName" : "Negative Themes"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Products with Most Negative  Themes"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 8,
+        "width" : 2,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "d6f75470",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "63b29e61",
+            "fields" : [ {
+              "name" : "Link",
+              "expression" : "`Link`"
+            }, {
+              "name" : "item_name",
+              "expression" : "`item_name`"
+            }, {
+              "name" : "Average_Sentiment",
+              "expression" : "`Average_Sentiment`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "table",
+          "encodings" : {
+            "columns" : [ {
+              "fieldName" : "Link",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "string",
+              "displayAs" : "string",
+              "visible" : true,
+              "order" : 0,
+              "title" : "Link",
+              "allowSearch" : false,
+              "alignContent" : "left",
+              "allowHTML" : true,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "Link"
+            }, {
+              "fieldName" : "item_name",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "string",
+              "displayAs" : "string",
+              "visible" : false,
+              "order" : 1,
+              "title" : "Product",
+              "allowSearch" : true,
+              "alignContent" : "left",
+              "allowHTML" : true,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "item_name"
+            }, {
+              "fieldName" : "Average_Sentiment",
+              "numberFormat" : "0.00",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "float",
+              "displayAs" : "number",
+              "visible" : true,
+              "order" : 2,
+              "title" : "Average Sentiment",
+              "allowSearch" : false,
+              "alignContent" : "right",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "Average_Sentiment"
+            } ]
+          },
+          "invisibleColumns" : [ {
+            "numberFormat" : "0",
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "Total_Reviews",
+            "type" : "integer",
+            "displayAs" : "number",
+            "order" : 3,
+            "title" : "Total_Reviews",
+            "allowSearch" : false,
+            "alignContent" : "right",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          } ],
+          "allowHTMLByDefault" : false,
+          "itemsPerPage" : 25,
+          "paginationSize" : "default",
+          "condensed" : true,
+          "withRowNumber" : false
+        }
+      },
+      "position" : {
+        "x" : 2,
+        "y" : 8,
+        "width" : 4,
+        "height" : 6
+      }
+    } ]
+  }, {
+    "name" : "e4f2954a",
+    "displayName" : "Product Summary",
+    "layout" : [ {
+      "widget" : {
+        "name" : "45cf277d",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "4adb1972",
+            "fields" : [ {
+              "name" : "item_category",
+              "expression" : "`item_category`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "item_category",
+              "displayName" : "item_category"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Product Category",
+            "headerAlignment" : "left"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 5,
+        "width" : 3,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "6e1c73c7",
+        "textbox_spec" : "# Product Sentiment Product Summary"
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 0,
+        "width" : 3,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "6f005cfb",
+        "queries" : [ {
+          "name" : "dashboards/01f01166a45b1e7196dc881b7a5d32ae/datasets/01f01f7a43f11eacad612ac1d502ed77_item_name",
+          "query" : {
+            "datasetName" : "3a62c660",
+            "fields" : [ {
+              "name" : "item_name",
+              "expression" : "`item_name`"
+            }, {
+              "name" : "item_name_associativity",
+              "expression" : "COUNT_IF(`associative_filter_predicate_group`)"
+            } ],
+            "disaggregated" : false
+          }
+        }, {
+          "name" : "parameter_dashboards/01f01166a45b1e7196dc881b7a5d32ae/datasets/01f01f79d2b41383ba8d390553fade06_item",
+          "query" : {
+            "datasetName" : "3a33ebf9",
+            "parameters" : [ {
+              "name" : "item",
+              "keyword" : "item"
+            } ],
+            "disaggregated" : false
+          }
+        }, {
+          "name" : "parameter_dashboards/01f01166a45b1e7196dc881b7a5d32ae/datasets/01f021e8bda310509388750965005dc3_item",
+          "query" : {
+            "datasetName" : "4adb1972",
+            "parameters" : [ {
+              "name" : "item",
+              "keyword" : "item"
+            } ],
+            "disaggregated" : false
+          }
+        }, {
+          "name" : "parameter_dashboards/01f01166a45b1e7196dc881b7a5d32ae/datasets/01f021e9cedc114a99c46f3959e87494_item",
+          "query" : {
+            "datasetName" : "0f002b0e",
+            "parameters" : [ {
+              "name" : "item",
+              "keyword" : "item"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "filter-single-select",
+          "encodings" : {
+            "fields" : [ {
+              "fieldName" : "item_name",
+              "displayName" : "item_name",
+              "queryName" : "dashboards/01f01166a45b1e7196dc881b7a5d32ae/datasets/01f01f7a43f11eacad612ac1d502ed77_item_name"
+            }, {
+              "parameterName" : "item",
+              "queryName" : "parameter_dashboards/01f01166a45b1e7196dc881b7a5d32ae/datasets/01f01f79d2b41383ba8d390553fade06_item"
+            }, {
+              "parameterName" : "item",
+              "queryName" : "parameter_dashboards/01f01166a45b1e7196dc881b7a5d32ae/datasets/01f021e8bda310509388750965005dc3_item"
+            }, {
+              "parameterName" : "item",
+              "queryName" : "parameter_dashboards/01f01166a45b1e7196dc881b7a5d32ae/datasets/01f021e9cedc114a99c46f3959e87494_item"
+            } ]
+          },
+          "selection" : {
+            "defaultSelection" : {
+              "operator" : {
+                "operator" : "OR",
+                "args" : [ ]
+              }
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : ""
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 2,
+        "width" : 3,
+        "height" : 1
+      }
+    }, {
+      "widget" : {
+        "name" : "62dc57c2",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "0f002b0e",
+            "fields" : [ {
+              "name" : "Suggestions",
+              "expression" : "`Suggestions`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "table",
+          "encodings" : {
+            "columns" : [ {
+              "fieldName" : "Suggestions",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "string",
+              "displayAs" : "string",
+              "visible" : true,
+              "order" : 100004,
+              "title" : "Suggestions",
+              "allowSearch" : false,
+              "alignContent" : "left",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "Suggestions"
+            } ]
+          },
+          "invisibleColumns" : [ {
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "Product",
+            "type" : "string",
+            "displayAs" : "string",
+            "order" : 100000,
+            "title" : "Product",
+            "allowSearch" : false,
+            "alignContent" : "left",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          }, {
+            "numberFormat" : "0.00",
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "average_rating",
+            "type" : "float",
+            "displayAs" : "number",
+            "order" : 100001,
+            "title" : "average_rating",
+            "allowSearch" : false,
+            "alignContent" : "right",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          }, {
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "item_category",
+            "type" : "string",
+            "displayAs" : "string",
+            "order" : 100002,
+            "title" : "item_category",
+            "allowSearch" : false,
+            "alignContent" : "left",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          }, {
+            "numberFormat" : "0",
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "rating_number",
+            "type" : "integer",
+            "displayAs" : "number",
+            "order" : 100003,
+            "title" : "rating_number",
+            "allowSearch" : false,
+            "alignContent" : "right",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          } ],
+          "allowHTMLByDefault" : false,
+          "itemsPerPage" : 25,
+          "paginationSize" : "default",
+          "condensed" : true,
+          "withRowNumber" : false
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 3,
+        "width" : 3,
+        "height" : 6
+      }
+    }, {
+      "widget" : {
+        "name" : "d3f8062c",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "4adb1972",
+            "fields" : [ {
+              "name" : "item_name",
+              "expression" : "`item_name`"
+            } ],
+            "parameterValues" : [ {
+              "keyword" : "item",
+              "selection" : { }
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "item_name",
+              "displayName" : "item_name"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Product"
+          }
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 3,
+        "width" : 3,
+        "height" : 2
+      }
+    }, {
+      "widget" : {
+        "name" : "66ebb019",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "4adb1972",
+            "fields" : [ {
+              "name" : "rating_number",
+              "expression" : "`rating_number`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "rating_number",
+              "displayName" : "rating_number"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Number of Ratings"
+          }
+        }
+      },
+      "position" : {
+        "x" : 4,
+        "y" : 2,
+        "width" : 1,
+        "height" : 1
+      }
+    }, {
+      "widget" : {
+        "name" : "6b32b8c7",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "4adb1972",
+            "fields" : [ {
+              "name" : "average_rating",
+              "expression" : "`average_rating`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "average_rating",
+              "displayName" : "average_rating"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "Average Rating"
+          }
+        }
+      },
+      "position" : {
+        "x" : 5,
+        "y" : 2,
+        "width" : 1,
+        "height" : 1
+      }
+    }, {
+      "widget" : {
+        "name" : "6949a04f",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "4adb1972",
+            "fields" : [ {
+              "name" : "count(*)",
+              "expression" : "COUNT(`*`)"
+            } ],
+            "disaggregated" : false
+          }
+        } ],
+        "spec" : {
+          "version" : 2,
+          "widgetType" : "counter",
+          "encodings" : {
+            "value" : {
+              "fieldName" : "count(*)",
+              "displayName" : "Count of Records"
+            }
+          },
+          "frame" : {
+            "showTitle" : true,
+            "title" : "No of Reviews"
+          }
+        }
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 2,
+        "width" : 1,
+        "height" : 1
+      }
+    }, {
+      "widget" : {
+        "name" : "6aba7ee3",
+        "queries" : [ {
+          "name" : "main_query",
+          "query" : {
+            "datasetName" : "3a33ebf9",
+            "fields" : [ {
+              "name" : "Key_theme",
+              "expression" : "`Key_theme`"
+            }, {
+              "name" : "Number_of_Themes",
+              "expression" : "`Number_of_Themes`"
+            } ],
+            "disaggregated" : true
+          }
+        } ],
+        "spec" : {
+          "version" : 1,
+          "widgetType" : "table",
+          "encodings" : {
+            "columns" : [ {
+              "fieldName" : "Key_theme",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "string",
+              "displayAs" : "string",
+              "visible" : true,
+              "order" : 100001,
+              "title" : "Top Themes",
+              "allowSearch" : false,
+              "alignContent" : "left",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "Key_theme"
+            }, {
+              "fieldName" : "Number_of_Themes",
+              "numberFormat" : "0",
+              "booleanValues" : [ "false", "true" ],
+              "imageUrlTemplate" : "{{ @ }}",
+              "imageTitleTemplate" : "{{ @ }}",
+              "imageWidth" : "",
+              "imageHeight" : "",
+              "linkUrlTemplate" : "{{ @ }}",
+              "linkTextTemplate" : "{{ @ }}",
+              "linkTitleTemplate" : "{{ @ }}",
+              "linkOpenInNewTab" : true,
+              "type" : "integer",
+              "displayAs" : "number",
+              "visible" : true,
+              "order" : 100002,
+              "title" : "Number_of_Themes",
+              "allowSearch" : false,
+              "alignContent" : "right",
+              "allowHTML" : false,
+              "highlightLinks" : false,
+              "useMonospaceFont" : false,
+              "preserveWhitespace" : false,
+              "displayName" : "Number_of_Themes"
+            } ]
+          },
+          "invisibleColumns" : [ {
+            "booleanValues" : [ "false", "true" ],
+            "imageUrlTemplate" : "{{ @ }}",
+            "imageTitleTemplate" : "{{ @ }}",
+            "imageWidth" : "",
+            "imageHeight" : "",
+            "linkUrlTemplate" : "{{ @ }}",
+            "linkTextTemplate" : "{{ @ }}",
+            "linkTitleTemplate" : "{{ @ }}",
+            "linkOpenInNewTab" : true,
+            "name" : "item_name",
+            "type" : "string",
+            "displayAs" : "string",
+            "order" : 100000,
+            "title" : "item_name",
+            "allowSearch" : false,
+            "alignContent" : "left",
+            "allowHTML" : false,
+            "highlightLinks" : false,
+            "useMonospaceFont" : false,
+            "preserveWhitespace" : false
+          } ],
+          "allowHTMLByDefault" : false,
+          "itemsPerPage" : 25,
+          "paginationSize" : "default",
+          "condensed" : true,
+          "withRowNumber" : false
+        }
+      },
+      "position" : {
+        "x" : 0,
+        "y" : 7,
+        "width" : 3,
+        "height" : 4
+      }
+    }, {
+      "widget" : {
+        "name" : "eb825034",
+        "textbox_spec" : "# Product Sentiment Product Summary"
+      },
+      "position" : {
+        "x" : 3,
+        "y" : 0,
+        "width" : 3,
+        "height" : 2
+      }
+    } ]
+  } ]
+}
